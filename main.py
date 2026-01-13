@@ -1,8 +1,10 @@
+from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi import FastAPI, Request
 import logging
 import time
 
 app = FastAPI()
+Instrumentator().instrument(app).expose(app)
 
 # Configure logging
 logging.basicConfig(
