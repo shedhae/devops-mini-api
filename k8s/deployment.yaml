@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-mini-api
+  namespace: devops-mini-api
+  labels:
+    app: devops-mini-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: devops-mini-api
+  template:
+    metadata:
+      labels:
+        app: devops-mini-api
+    spec:
+      containers:
+        - name: api
+          image: chadha2003/devops-mini-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: LOG_LEVEL
+              value: "INFO"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
