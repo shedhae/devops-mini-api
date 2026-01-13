@@ -43,8 +43,8 @@ jobs:
       - name: Push Docker image
         if: github.event_name == 'push'
         env:
-          DOCKER_USERNAME: ${{ secrets.chadha2003 }}
-          DOCKER_PASSWORD: ${{ secrets.gdHDVXqkt6t&+tB }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
           echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
           docker tag devops-mini-api $DOCKER_USERNAME/devops-mini-api:latest
