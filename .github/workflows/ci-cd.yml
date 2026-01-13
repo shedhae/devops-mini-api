@@ -19,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -46,6 +46,6 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
-          echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-          docker tag devops-mini-api $DOCKER_USERNAME/devops-mini-api:latest
-          docker push $DOCKER_USERNAME/devops-mini-api:latest
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          docker tag devops-mini-api "$DOCKER_USERNAME/devops-mini-api:latest"
+          docker push "$DOCKER_USERNAME/devops-mini-api:latest"
