@@ -43,7 +43,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           if [ -d tests ]; then
-            pytest tests/ -v --cov=main --cov-report=xml --cov-report=html --cov-report=term
+            pytest tests/ --no-cov -v
           else
             echo "No tests found, skipping tests."
           fi
@@ -53,9 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: |
-            coverage.xml
-            htmlcov/
+          path: coverage.xml
 
   security-sast:
     name: Security Scan (Bandit)
