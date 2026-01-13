@@ -66,17 +66,48 @@ jobs:
 
           - name: Install dependencies
             run: |
-              set -e
-              python -m pip install --upgrade pip
-              if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-              if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-              pip install pytest pytest-cov
+              name: Simple CI
 
-          - name: Run tests
-            run: |
-              if [ -d tests ]; then
-                pytest -q
-              else
-                echo "No tests found; skipping."
-              fi
-        with:
+              on:
+                push:
+                  branches: ["*"]
+                pull_request:
+                  branches: ["*"]
+                workflow_dispatch:
+
+              jobs:
+                test:
+                  name: Test
+                  runs-on: ubuntu-latest
+                  steps:
+                    - name: Checkout code
+                      uses: actions/checkout@v4
+
+                    - name: Set up Python
+                      uses: actions/setup-python@v5
+                      with:
+                        python-version: "3.11"
+                        cache: pip
+
+                    - name: Install dependencies
+                      run: |
+                        set -e
+                        python -m pip install --upgrade pip
+                        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+                        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+                        pip install pytest pytest-cov
+
+                    - name: Run tests with coverage
+                      run: |
+                        if [ -d tests ]; then
+                          pytest -q --cov=main --cov-report=term --cov-report=xml
+                        else
+                          echo "No tests found; skipping."
+                        fi
+
+                    - name: Upload coverage.xml
+                      if: always() && hashFiles('coverage.xml') != ''
+                      uses: actions/upload-artifact@v4
+                      with:
+                        name: coverage-report
+                        path: coverage.xml
