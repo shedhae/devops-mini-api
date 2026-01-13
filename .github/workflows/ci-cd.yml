@@ -13,13 +13,13 @@ permissions:
   actions: read
 
 env:
-  DOCKER_IMAGE: devops-mini-api
   PYTHON_VERSION: "3.12"
 
 jobs:
   test:
-    name: Test & Code Quality
+    name: Tests & Coverage
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,82 +32,54 @@ jobs:
 
       - name: Install dependencies
         run: |
+          set -e
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          pip install bandit pytest pytest-cov
+          pip install pytest pytest-cov bandit
 
       - name: Run tests with coverage
         run: |
-          pytest tests/ -v --cov=main --cov-report=xml --cov-report=html --cov-report=term
+          if [ -d tests ]; then
+            pytest tests/ -v --cov=main --cov-report=xml --cov-report=html --cov-report=term
+          else
+            echo "No tests found, skipping tests."
+          fi
 
-      - name: Archive coverage results
+      - name: Upload coverage report
+        if: always() && hashFiles('coverage.xml') != ''
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: htmlcov/
+          path: |
+            coverage.xml
+            htmlcov/
 
   security-sast:
-    name: Security Scan (SAST)
+    name: Security Scan (Bandit)
     runs-on: ubuntu-latest
-    jobs:
-      test:
-        name: Test
-        runs-on: ubuntu-latest
-        steps:
-          - name: Checkout code
-            uses: actions/checkout@v4
+    needs: test
 
-          - name: Set up Python
-            uses: actions/setup-python@v5
-            with:
-              python-version: "3.11"
-              cache: pip
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-          - name: Install dependencies
-            run: |
-              name: Simple CI
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-              on:
-                push:
-                  branches: ["*"]
-                pull_request:
-                  branches: ["*"]
-                workflow_dispatch:
+      - name: Install Bandit
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit
 
-              jobs:
-                test:
-                  name: Test
-                  runs-on: ubuntu-latest
-                  steps:
-                    - name: Checkout code
-                      uses: actions/checkout@v4
+      - name: Run Bandit SAST
+        run: |
+          bandit -r . -f json -o bandit-report.json || true
 
-                    - name: Set up Python
-                      uses: actions/setup-python@v5
-                      with:
-                        python-version: "3.11"
-                        cache: pip
-
-                    - name: Install dependencies
-                      run: |
-                        set -e
-                        python -m pip install --upgrade pip
-                        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-                        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-                        pip install pytest pytest-cov
-
-                    - name: Run tests with coverage
-                      run: |
-                        if [ -d tests ]; then
-                          pytest -q --cov=main --cov-report=term --cov-report=xml
-                        else
-                          echo "No tests found; skipping."
-                        fi
-
-                    - name: Upload coverage.xml
-                      if: always() && hashFiles('coverage.xml') != ''
-                      uses: actions/upload-artifact@v4
-                      with:
-                        name: coverage-report
-                        path: coverage.xml
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
